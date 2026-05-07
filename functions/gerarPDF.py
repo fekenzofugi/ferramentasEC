@@ -58,7 +58,7 @@ def gerar_pdf_formatado(df):
     pdf.set_xy(14, 21)
     pdf.set_font("Helvetica", "", 9)
     pdf.set_text_color(51, 51, 51)
-    data_hora = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')
+    data_hora = pd.Timestamp.now(tz='America/Sao_Paulo').strftime('%d/%m/%Y %H:%M')
     pdf.cell(0, 5, f"Total de SKUs: {total_skus}   |   Total de Unidades: {total_unidades}   |   Data: {data_hora}")
 
     pdf.ln(18)
