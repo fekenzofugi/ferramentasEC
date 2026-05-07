@@ -1,67 +1,85 @@
 import pandas as pd
 from io import BytesIO
-from weasyprint import HTML
+from fpdf import FPDF
 
 # ─────────────────────────────────────────────────────────────────────────────
 # GERAÇÃO DO PDF
 # ─────────────────────────────────────────────────────────────────────────────
-
 def gerar_pdf_formatado(df):
     total_unidades = df['Unidades'].sum()
     total_skus = len(df)
-    
-    rows_html = ""
-    for _, row in df.iterrows():
-        rows_html += f"""
-        <tr>
-            <td style="font-weight: bold; border-bottom: 1px solid #ddd;">{row['SKU']}</td>
-            <td style="border-bottom: 1px solid #ddd;">{row['Produto']}</td>
-            <td style="text-align: center; font-weight: bold; border-bottom: 1px solid #ddd;">{row['Unidades']}</td>
-            <td style="font-family: monospace; font-size: 8pt; border-bottom: 1px solid #ddd;">{row['Universal']}</td>
-        </tr>
-        """
 
-    html_string = f"""
-    <html>
-    <head>
-        <style>
-            @page {{ size: A4; margin: 1cm; }}
-            body {{ font-family: sans-serif; color: #333; }}
-            .header {{ background: #f4f4f4; padding: 15px; border-radius: 5px; margin-bottom: 20px; border-left: 5px solid #1e3a8a; }}
-            h1 {{ margin: 0; font-size: 16pt; color: #1e3a8a; }}
-            .summary {{ margin-top: 5px; font-size: 10pt; }}
-            table {{ width: 100%; border-collapse: collapse; margin-top: 10px; }}
-            th {{ background: #1e3a8a; color: white; text-align: left; padding: 8px; font-size: 10pt; }}
-            td {{ padding: 8px; font-size: 9pt; vertical-align: top; }}
-            tr:nth-child(even) {{ background: #f9f9f9; }}
-        </style>
-    </head>
-    <body>
-        <div class="header">
-            <h1>Lista de Separação - Mercado Livre Full</h1>
-            <div class="summary">
-                <strong>Total de SKUs:</strong> {total_skus} | 
-                <strong>Total de Unidades:</strong> {total_unidades} | 
-                <strong>Data:</strong> {pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')}
-            </div>
-        </div>
-        <table>
-            <thead>
-                <tr>
-                    <th style="width: 15%;">SKU</th>
-                    <th style="width: 55%;">Produto</th>
-                    <th style="width: 10%; text-align: center;">Qtd</th>
-                    <th style="width: 20%;">Universal</th>
-                </tr>
-            </thead>
-            <tbody>
-                {rows_html}
-            </tbody>
-        </table>
-    </body>
-    </html>
-    """
-    
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_auto_page_break(auto=True, margin=10)
+
+    # ── Header ──
+    pdf.set_fill_color(244, 244, 244)
+    pdf.set_draw_color(30, 58, 138)
+    pdf.set_line_width(1.2)
+    pdf.rect(10, 10, 190, 22, style='FD')
+    pdf.set_line_width(0.2)
+
+    pdf.set_xy(14, 13)
+    pdf.set_font("Helvetica", "B", 14)
+    pdf.set_text_color(30, 58, 138)
+    pdf.cell(0, 7, "Lista de Separação - Mercado Livre Full", ln=True)
+
+    pdf.set_xy(14, 21)
+    pdf.set_font("Helvetica", "", 9)
+    pdf.set_text_color(51, 51, 51)
+    data_hora = pd.Timestamp.now().strftime('%d/%m/%Y %H:%M')
+    pdf.cell(0, 5, f"Total de SKUs: {total_skus}   |   Total de Unidades: {total_unidades}   |   Data: {data_hora}")
+
+    pdf.ln(18)
+
+    # ── Table header ──
+    pdf.set_fill_color(30, 58, 138)
+    pdf.set_text_color(255, 255, 255)
+    pdf.set_font("Helvetica", "B", 10)
+
+    col_widths = [28, 104, 18, 38]  # SKU, Produto, Qtd, Universal
+    headers = ["SKU", "Produto", "Qtd", "Universal"]
+
+    for w, h in zip(col_widths, headers):
+        pdf.cell(w, 8, h, fill=True)
+    pdf.ln()
+
+    # ── Rows ──
+    pdf.set_font("Helvetica", "", 8)
+    pdf.set_text_color(51, 51, 51)
+
+    for i, (_, row) in enumerate(df.iterrows()):
+        fill = i % 2 == 1
+        if fill:
+            pdf.set_fill_color(249, 249, 249)
+        else:
+            pdf.set_fill_color(255, 255, 255)
+
+        pdf.set_draw_color(221, 221, 221)
+
+        # SKU (bold)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.cell(col_widths[0], 7, str(row['SKU']), border="B", fill=True)
+
+        # Produto
+        pdf.set_font("Helvetica", "", 8)
+        produto = str(row['Produto'])
+        if pdf.get_string_width(produto) > col_widths[1] - 2:
+            produto = produto[:60] + "..."
+        pdf.cell(col_widths[1], 7, produto, border="B", fill=True)
+
+        # Qtd (bold, centered)
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.cell(col_widths[2], 7, str(row['Unidades']), border="B", fill=True, align="C")
+
+        # Universal (monospace-like, smaller)
+        pdf.set_font("Courier", "", 7)
+        pdf.cell(col_widths[3], 7, str(row['Universal']), border="B", fill=True)
+
+        pdf.ln()
+
+    # ── Output ──
     pdf_output = BytesIO()
-    HTML(string=html_string).write_pdf(pdf_output)
+    pdf.output(pdf_output)
     return pdf_output.getvalue()
