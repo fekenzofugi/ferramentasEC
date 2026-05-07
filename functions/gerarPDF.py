@@ -46,7 +46,6 @@ def gerar_pdf_formatado(df):
     pdf.ln()
 
     # ── Rows ──
-    pdf.set_font("Helvetica", "", 8)
     pdf.set_text_color(51, 51, 51)
 
     for i, (_, row) in enumerate(df.iterrows()):
@@ -58,24 +57,28 @@ def gerar_pdf_formatado(df):
 
         pdf.set_draw_color(221, 221, 221)
 
+        y_before = pdf.get_y()
+
         # SKU (bold)
         pdf.set_font("Helvetica", "B", 8)
         pdf.cell(col_widths[0], 7, str(row['SKU']), border="B", fill=True)
 
-        # Produto
+        # Produto (multi-line)
         pdf.set_font("Helvetica", "", 8)
-        produto = str(row['Produto'])
-        if pdf.get_string_width(produto) > col_widths[1] - 2:
-            produto = produto[:60] + "..."
-        pdf.cell(col_widths[1], 7, produto, border="B", fill=True)
+        x_after_sku = pdf.get_x()
+        pdf.multi_cell(col_widths[1], 7, str(row['Produto']), border="B", fill=True)
+        row_height = pdf.get_y() - y_before
+
+        # Reposiciona para continuar na mesma linha (Qtd e Universal)
+        pdf.set_xy(x_after_sku + col_widths[1], y_before)
 
         # Qtd (bold, centered)
         pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(col_widths[2], 7, str(row['Unidades']), border="B", fill=True, align="C")
+        pdf.cell(col_widths[2], row_height, str(row['Unidades']), border="B", fill=True, align="C")
 
-        # Universal (monospace-like, smaller)
+        # Universal
         pdf.set_font("Courier", "", 7)
-        pdf.cell(col_widths[3], 7, str(row['Universal']), border="B", fill=True)
+        pdf.cell(col_widths[3], row_height, str(row['Universal']), border="B", fill=True)
 
         pdf.ln()
 
