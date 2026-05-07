@@ -58,29 +58,30 @@ def gerar_pdf_formatado(df):
         pdf.set_draw_color(221, 221, 221)
 
         y_before = pdf.get_y()
+        x_start = pdf.get_x()
 
-        # SKU (bold)
-        pdf.set_font("Helvetica", "B", 8)
-        pdf.cell(col_widths[0], 7, str(row['SKU']), border="B", fill=True)
-
-        # Produto (multi-line)
+        # Produto (multi-line) — renderiza primeiro para calcular altura
         pdf.set_font("Helvetica", "", 8)
-        x_after_sku = pdf.get_x()
+        pdf.set_xy(x_start + col_widths[0], y_before)
         pdf.multi_cell(col_widths[1], 7, str(row['Produto']), border="B", fill=True)
         row_height = pdf.get_y() - y_before
 
-        # Reposiciona para continuar na mesma linha (Qtd e Universal)
-        pdf.set_xy(x_after_sku + col_widths[1], y_before)
+        # SKU (bold) — volta ao início da linha com a altura correta
+        pdf.set_font("Helvetica", "B", 8)
+        pdf.set_xy(x_start, y_before)
+        pdf.cell(col_widths[0], row_height, str(row['SKU']), border="B", fill=True, align="L")
 
         # Qtd (bold, centered)
         pdf.set_font("Helvetica", "B", 8)
+        pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_before)
         pdf.cell(col_widths[2], row_height, str(row['Unidades']), border="B", fill=True, align="C")
 
         # Universal
         pdf.set_font("Courier", "", 7)
+        pdf.set_xy(x_start + col_widths[0] + col_widths[1] + col_widths[2], y_before)
         pdf.cell(col_widths[3], row_height, str(row['Universal']), border="B", fill=True)
 
-        pdf.ln()
+        pdf.set_xy(x_start, y_before + row_height)
 
     # ── Output ──
     pdf_output = BytesIO()
