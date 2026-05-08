@@ -69,6 +69,7 @@ if uploaded_files:
     if dados:
         df = pd.DataFrame(dados)
         df['Vlr Unitário'] = pd.to_numeric(df['Vlr Unitário'], errors='coerce')
+        df['Vlr Unitário'] = df['Vlr Unitário'].apply(lambda x: f"{x:,.2f}".replace(',', 'X').replace('.', ',').replace('X', '.') if pd.notna(x) else 'N/A')
         st.success(f"{len(df)} item(s) extraído(s) de {len(uploaded_files)} arquivo(s).")
         st.dataframe(df, use_container_width=True)
 
