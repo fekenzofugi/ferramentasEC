@@ -20,8 +20,8 @@ def gerar_pdf_formatado(df):
         pdf.set_fill_color(30, 58, 138)
         pdf.set_text_color(255, 255, 255)
         pdf.set_font("Helvetica", "B", 10)
-        col_widths = [28, 104, 18, 38]
-        headers = ["SKU", "Produto", "Qtd", "Universal"]
+        col_widths = [28, 84, 18, 30, 30]
+        headers = ["SKU", "Produto", "Qtd", "Código ML", "Universal"]
         for w, h in zip(col_widths, headers):
             pdf.cell(w, 8, h, fill=True)
         pdf.ln()
@@ -33,7 +33,7 @@ def gerar_pdf_formatado(df):
         words = produto_text.split(" ")
         lines = 1
         current_line = ""
-        max_width = 104 - 2
+        max_width = 84 - 2
         for word in words:
             test = (current_line + " " + word).strip()
             if pdf.get_string_width(test) > max_width:
@@ -64,7 +64,7 @@ def gerar_pdf_formatado(df):
     pdf.ln(18)
     draw_header()
 
-    col_widths = [28, 104, 18, 38]
+    col_widths = [28, 84, 18, 30, 30]
 
     # ── Rows ──
     for i, (_, row) in enumerate(df.iterrows()):
@@ -98,10 +98,15 @@ def gerar_pdf_formatado(df):
         pdf.set_xy(x_start + col_widths[0] + col_widths[1], y_before)
         pdf.cell(col_widths[2], row_height, str(row['Unidades']), border="B", fill=True, align="C")
 
-        # Universal
+        # Código ML
         pdf.set_font("Courier", "", 7)
         pdf.set_xy(x_start + col_widths[0] + col_widths[1] + col_widths[2], y_before)
-        pdf.cell(col_widths[3], row_height, str(row['Universal']), border="B", fill=True)
+        pdf.cell(col_widths[3], row_height, str(row['Código ML']), border="B", fill=True)
+
+        # Universal
+        pdf.set_font("Courier", "", 7)
+        pdf.set_xy(x_start + col_widths[0] + col_widths[1] + col_widths[2] + col_widths[3], y_before)
+        pdf.cell(col_widths[4], row_height, str(row['Universal']), border="B", fill=True)
 
         pdf.set_xy(x_start, y_before + row_height)
 
