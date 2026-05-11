@@ -80,16 +80,22 @@ def extrair_produtos(file_obj):
         m = re.search(r'Código ML:\s*(\w+)', linha['text'])
         codigo_ml = m.group(1) if m else None
         universal = None
-        m = re.search(r'Código universal:\s*(\d{8,14})', linha['text'])
+        m = re.search(r'Código universal:\s*(\d{8,14}|N/A)', linha['text'])
         if m: universal = m.group(1)
         sku = None
         m = re.search(r'SKU:\s*(\w+)', linha['text'])
         if m: sku = m.group(1)
+        # Caso "SKU:" no final da linha — valor na próxima linha (ex: "N/A SKU:" → "MM27123")
+        sku_valor_na_proxima = bool(re.search(r'SKU:\s*$', linha['text'].strip()))
         if i + 1 < len(linhas):
             prox = linhas[i + 1]['text']
             if not sku:
                 m = re.search(r'SKU:\s*(\w+)', prox)
-                if m: sku = m.group(1)
+                if m:
+                    sku = m.group(1)
+                elif sku_valor_na_proxima:
+                    m = re.match(r'^(\w+)', prox.strip())
+                    if m: sku = m.group(1)
             if not universal:
                 m = re.search(r'\b(\d{8,14})\b', prox)
                 if m: universal = m.group(1)
@@ -109,7 +115,12 @@ def extrair_produtos(file_obj):
             if 'SKU:' in txt:
                 k += 1
                 continue
+            # Pula linha que contém apenas o valor do SKU (quando SKU: ficou na linha anterior)
+            if sku_valor_na_proxima and k == i + 1 and txt.strip() == sku:
+                k += 1
+                continue
             txt_limpo = re.sub(r'^\d{8,14}\s*', '', txt).strip()
+            txt_limpo = re.sub(r'^N/A\s*', '', txt_limpo).strip()
             txt_limpo = re.sub(r'SKU:\s*\w+', '', txt_limpo).strip()
             if txt_limpo and len(txt_limpo) > 2:
                 desc_linhas.append(txt_limpo)
