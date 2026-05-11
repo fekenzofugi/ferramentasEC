@@ -69,7 +69,17 @@ def extrair_produtos(file_obj):
     palavras_produto = [w for w in all_words if w['x0'] < limites.get(w['page'], (230, 0, 0))[0]]
     linhas = agrupar_em_linhas(palavras_produto)
 
-    IGNORAR = ('PRODUTO', 'UNIDADES', 'IDENTIF', 'INSTRUÇ', 'Lista de', 'Frete', 'Produtos do envio', 'VERIFIQUE', 'Todos os', 'estarem', 'Além disso', 'externa da', 'Aprenda')
+    # Adicione os termos da regulamentação na tupla de ignore
+    IGNORAR = (
+        'PRODUTO', 'UNIDADES', 'IDENTIF', 'INSTRUÇ', 'Lista de', 'Frete', 
+        'Produtos do envio', 'VERIFIQUE', 'Todos os', 'estarem', 'Além disso', 
+        'externa da', 'Aprenda',
+        # Termos específicos para ignorar a regulamentação:
+        'Anexo de', 'regulamentação comercial', 'RDC N.', 'Devem ter em', 
+        'embalagem primária', 'informações visíveis', 'Registro na ANVISA', 
+        'Marca ou nome', 'Número de cadastro', 'Lote ou data', 'Ingredientes', 
+        'Dados do fabricante', 'Observe que:', 'produto for importado',
+    )
     produtos = []
     i = 0
     while i < len(linhas):
