@@ -50,12 +50,22 @@ def extrair_unidades(words_pagina, top_ref, x_min, x_max, tolerancia_y=10):
             except ValueError: pass
     return 0
 
+def extrair_numero_frete(all_words):
+    """Extrai o número da coleta a partir da linha 'Frete #XXXXXXXX'."""
+    linhas = agrupar_em_linhas(list(all_words))
+    for linha in linhas:
+        m = re.search(r'Frete\s*#(\d+)', linha['text'], re.IGNORECASE)
+        if m:
+            return m.group(1)
+    return None
+
 def extrair_produtos(file_obj):
     all_words = lerPDF_palavras(file_obj)
     paginas_words = {}
     for w in all_words:
         paginas_words.setdefault(w['page'], []).append(w)
     limites = {page: detectar_limites_pagina(words) for page, words in paginas_words.items()}
+    numero_frete = extrair_numero_frete(all_words)
     palavras_produto = [w for w in all_words if w['x0'] < limites.get(w['page'], (230, 0, 0))[0]]
     linhas = agrupar_em_linhas(palavras_produto)
 
@@ -70,7 +80,7 @@ def extrair_produtos(file_obj):
         m = re.search(r'Código ML:\s*(\w+)', linha['text'])
         codigo_ml = m.group(1) if m else None
         universal = None
-        m = re.search(r'Código universal:\s*(\d{12,13})', linha['text'])
+        m = re.search(r'Código universal:\s*(\d{8,14})', linha['text'])
         if m: universal = m.group(1)
         sku = None
         m = re.search(r'SKU:\s*(\w+)', linha['text'])
@@ -81,7 +91,7 @@ def extrair_produtos(file_obj):
                 m = re.search(r'SKU:\s*(\w+)', prox)
                 if m: sku = m.group(1)
             if not universal:
-                m = re.search(r'\b(\d{12,13})\b', prox)
+                m = re.search(r'\b(\d{8,14})\b', prox)
                 if m: universal = m.group(1)
         if not sku:
             i += 1
@@ -99,7 +109,7 @@ def extrair_produtos(file_obj):
             if 'SKU:' in txt:
                 k += 1
                 continue
-            txt_limpo = re.sub(r'^\d{12,15}\s*', '', txt).strip()
+            txt_limpo = re.sub(r'^\d{8,14}\s*', '', txt).strip()
             txt_limpo = re.sub(r'SKU:\s*\w+', '', txt_limpo).strip()
             if txt_limpo and len(txt_limpo) > 2:
                 desc_linhas.append(txt_limpo)
@@ -112,4 +122,4 @@ def extrair_produtos(file_obj):
             'Produto': ' '.join(desc_linhas).strip(),
         })
         i += 1
-    return produtos
+    return produtos, numero_frete

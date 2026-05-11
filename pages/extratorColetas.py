@@ -15,21 +15,22 @@ uploaded = st.file_uploader("Subir PDF da Coleta do Mercado Livre", type="pdf")
 
 if uploaded:
     with st.spinner("Processando dados..."):
-        dados = extrair_produtos(uploaded)
+        dados, numero_frete = extrair_produtos(uploaded)
         df = pd.DataFrame(dados)
     
     if not df.empty:
-        st.success(f"Encontrados {len(df)} produtos!")
+        frete_label = f"Coleta #{numero_frete}" if numero_frete else "Coleta"
+        st.success(f"Encontrados {len(df)} produtos! — {frete_label}")
         st.dataframe(df, use_container_width=True)
         
         # Gerar os três PDFs (Original, SKU e Produto)
-        pdf_bytes_original = gerar_pdf_formatado(df)
+        pdf_bytes_original = gerar_pdf_formatado(df, numero_frete)
         
         df_ordenado_sku = df.sort_values(by="SKU")
-        pdf_bytes_ordenado_sku = gerar_pdf_formatado(df_ordenado_sku)
+        pdf_bytes_ordenado_sku = gerar_pdf_formatado(df_ordenado_sku, numero_frete)
 
         df_ordenado_produto = df.sort_values(by="Produto")
-        pdf_bytes_ordenado_produto = gerar_pdf_formatado(df_ordenado_produto)
+        pdf_bytes_ordenado_produto = gerar_pdf_formatado(df_ordenado_produto, numero_frete)
         
         # Colunas para organizar os botões lado a lado
         col1, col2, col3 = st.columns(3)
